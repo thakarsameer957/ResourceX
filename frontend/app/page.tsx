@@ -5,7 +5,8 @@ import Logo from '../components/Logo'
 import { useMemo, useState, useEffect } from 'react'
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, ChevronDown, Clock3,
-  HandHeart, MapPin, Menu, PackageCheck, Search, X, Zap, ShieldCheck, Sparkles, AlertCircle
+  HandHeart, MapPin, Menu, PackageCheck, Search, X, Zap, ShieldCheck, Sparkles, AlertCircle,
+  Eye, EyeOff
 } from 'lucide-react'
 import { auth } from '../lib/firebase'
 import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth'
@@ -409,6 +410,11 @@ function Login({ onLogin, onBack }: { onLogin: (user: any) => void; onBack: () =
   const [isDuplicateEmail, setIsDuplicateEmail] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
 
+  // Toggle visibility states
+  const [showPassword, setShowPassword] = useState(false)
+  const [showRegPassword, setShowRegPassword] = useState(false)
+  const [showRegConfirm, setShowRegConfirm] = useState(false)
+
   const switchMode = (newMode: 'signin' | 'register' | 'forgot') => {
     setError('')
     setIsDuplicateEmail(false)
@@ -537,7 +543,12 @@ function Login({ onLogin, onBack }: { onLogin: (user: any) => void; onBack: () =
         <div className="mb-6 grid grid-cols-3 gap-2" aria-label="Login role">
           {['student', 'teacher', 'admin'].map(role => (
             <button key={role} type="button" disabled={loading} aria-pressed={loginRole === role}
-              onClick={() => { setLoginRole(role); switchMode('signin') }}
+              onClick={() => { 
+                setLoginRole(role); 
+                switchMode('signin');
+                setEmail('');
+                setPassword('');
+              }}
               className={`rounded-xl px-2 py-3 text-sm capitalize ${loginRole === role ? 'bg-[#164e41] text-white' : 'bg-[#eaf0e9] text-[#164e41]'}`}>
               {role} Login
             </button>
@@ -561,7 +572,12 @@ function Login({ onLogin, onBack }: { onLogin: (user: any) => void; onBack: () =
                   <label className="block text-xs font-medium text-[#65736a]">Password</label>
                   <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-[#164e41] hover:underline">Forgot password?</button>
                 </div>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 pr-10 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b978e] hover:text-[#164e41] focus:outline-none">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <button type="submit" disabled={loading} className="mt-6 w-full rounded-full bg-[#164e41] py-3 text-sm font-medium text-white transition hover:bg-[#0f3b31] disabled:opacity-50">
                 {loading ? 'Authenticating with Backend...' : 'Sign in to Workspace'}
@@ -572,6 +588,23 @@ function Login({ onLogin, onBack }: { onLogin: (user: any) => void; onBack: () =
               <p>{loginRole === 'student' && <>Don&apos;t have an account? <button type="button" onClick={() => switchMode('register')} className="font-semibold text-[#164e41] hover:underline">Student Register</button></>}</p>
             </div>
 
+            {loginRole === 'teacher' && (
+              <div className="mt-6 rounded-xl bg-[#eaf0e9] p-4 text-xs text-[#68756c]">
+                <p className="font-semibold text-[#164e41] mb-2">Faculty Demo Credentials</p>
+                <p>Email: <span className="font-medium text-[#202522]">judge.teacher@pcu.edu.in</span></p>
+                <p>Password: <span className="font-medium text-[#202522]">abc123</span></p>
+                <button type="button" onClick={() => { setEmail('judge.teacher@pcu.edu.in'); setPassword('abc123'); }} className="mt-3 rounded-md bg-white px-3 py-1.5 text-[11px] font-medium text-[#164e41] shadow-sm transition hover:bg-gray-50">Click to auto-fill</button>
+              </div>
+            )}
+
+            {loginRole === 'admin' && (
+              <div className="mt-6 rounded-xl bg-[#eaf0e9] p-4 text-xs text-[#68756c]">
+                <p className="font-semibold text-[#164e41] mb-2">Admin Demo Credentials</p>
+                <p>Email: <span className="font-medium text-[#202522]">judge.admin@pcu.edu.in</span></p>
+                <p>Password: <span className="font-medium text-[#202522]">abc123</span></p>
+                <button type="button" onClick={() => { setEmail('judge.admin@pcu.edu.in'); setPassword('abc123'); }} className="mt-3 rounded-md bg-white px-3 py-1.5 text-[11px] font-medium text-[#164e41] shadow-sm transition hover:bg-gray-50">Click to auto-fill</button>
+              </div>
+            )}
 
           </>
         )}
@@ -631,11 +664,21 @@ function Login({ onLogin, onBack }: { onLogin: (user: any) => void; onBack: () =
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#65736a]">Password</label>
-                <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                <div className="relative">
+                  <input type={showRegPassword ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 pr-10 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowRegPassword(!showRegPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b978e] hover:text-[#164e41] focus:outline-none">
+                    {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#65736a]">Confirm Password</label>
-                <input type="password" value={regConfirm} onChange={e => setRegConfirm(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                <div className="relative">
+                  <input type={showRegConfirm ? 'text' : 'password'} value={regConfirm} onChange={e => setRegConfirm(e.target.value)} required className="w-full rounded-xl border border-[#d6ded7] bg-[#f7f6f2] p-3 pr-10 text-sm outline-none focus:border-[#164e41]" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowRegConfirm(!showRegConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b978e] hover:text-[#164e41] focus:outline-none">
+                    {showRegConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <button type="submit" disabled={loading} className="mt-6 w-full rounded-full bg-[#164e41] py-3 text-sm font-medium text-white transition hover:bg-[#0f3b31] disabled:opacity-50">
                 {loading ? 'Validating Domain & Creating Account...' : 'Register Student Account'}
